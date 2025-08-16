@@ -42,11 +42,21 @@ pico_set_program_version(wifiBoard "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(wifiBoard 0)
-pico_enable_stdio_usb(wifiBoard 0)
+pico_enable_stdio_usb(wifiBoard 1)
 
 # Add the standard library to the build
 target_link_libraries(wifiBoard
-        pico_stdlib)
+        pico_stdlib
+        pico_cyw43_arch_lwip_poll)
+
+target_compile_definitions(wifiBoard PRIVATE
+        WIFI_SSID=\"${WIFI_SSID}\"
+        WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+        )
+
+message("HELLO HELLO HELLO")
+message(${WIFI_SSID})
+
 
 # Add the standard include files to the build
 target_include_directories(wifiBoard PRIVATE
@@ -54,9 +64,9 @@ target_include_directories(wifiBoard PRIVATE
 )
 
 # Add any user requested libraries
-target_link_libraries(wifiBoard 
-        pico_cyw43_arch_none
-        )
+#target_link_libraries(wifiBoard 
+#        pico_cyw43_arch_none
+#        )
 
 pico_add_extra_outputs(wifiBoard)
 
