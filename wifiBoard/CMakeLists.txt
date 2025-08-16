@@ -54,9 +54,6 @@ target_compile_definitions(wifiBoard PRIVATE
         WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
         )
 
-message("HELLO HELLO HELLO")
-message(${WIFI_SSID})
-
 
 # Add the standard include files to the build
 target_include_directories(wifiBoard PRIVATE
