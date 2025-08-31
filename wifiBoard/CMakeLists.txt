@@ -54,6 +54,11 @@ target_compile_definitions(wifiBoard PRIVATE
         WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
         )
 
+# Setting static IP
+pico_configure_ip4_address(wifiBoard PRIVATE 
+        CYW43_DEFAULT_IP_ADDRESS "192.168.68.200"
+        )
+
 
 # Add the standard include files to the build
 target_include_directories(wifiBoard PRIVATE

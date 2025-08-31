@@ -7,13 +7,46 @@
 
 #define TCP_PORT 4242
 
-#define RESPONSE "HTTP/1.1 200 OK\r\n\r\n"
+#define RESPONSE "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 38\r\n<html><body>Hello, world!</body></html>"
+
+static const char http_response[] =
+    "HTTP/1.1 200 OK\r\n"
+    "Content-Type: text/html\r\n"
+    "Content-Length: 12\r\n"
+    "Connection: close\r\n"
+    "\r\n"
+    "Hello World!";
 
 static struct tcp_pcb *client_pcb;
 
 static err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb) {
-    err_t err = tcp_write(tpcb, RESPONSE, strlen(RESPONSE), TCP_WRITE_FLAG_COPY);
+    err_t err = tcp_write(tpcb, http_response, sizeof(http_response)-1, TCP_WRITE_FLAG_COPY);
+    if (err != ERR_OK) {
+        printf("Failure to write data\n");
+        return err;
+    } else {
+        printf("Data written\n");
+    }
     return ERR_OK;
+}
+
+static err_t tcp_server_response(void *arg, struct tcp_pcb *client_pcb, pbuf *client_buf, err_t err) {
+    if (err != ERR_OK || client_pcb == NULL || client_buf == NULL) {
+        printf("Failure in response\n");
+        return ERR_VAL;
+    }
+    tcp_recved(client_pcb, client_buf->tot_len);
+    pbuf_free(client_buf);
+    printf("Accepted Response\n");
+    err_t write = tcp_server_send_data(arg, client_pcb);
+    if (write != ERR_OK) {
+        printf("something still goes wrong \n");
+    } else {
+        printf("No errors with Data Write\n");
+    }
+    tcp_close(client_pcb);
+    return write;
+
 }
 
 static err_t tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err) {
@@ -21,8 +54,9 @@ static err_t tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err)
         printf("Failure in accept\n");
         return ERR_VAL;
     }
-    printf("Hello World");
-    return tcp_server_send_data(arg, client_pcb);
+    tcp_recv(client_pcb, tcp_server_response);
+    printf("Accepted Connection\n");
+    return ERR_OK;
 
 }
 
@@ -38,12 +72,12 @@ int main()
 
     cyw43_arch_enable_sta_mode();
 
-    printf("Connecting to WiFi ... /n");
+    printf("Connecting to WiFi ... \n");
     if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
-        printf("Failed to connect... /n");
+        printf("Failed to connect... \n");
         return -1;
     } else {
-        printf("Connected");
+        printf("Connected\n");
     }
 
     // Example to turn on the Pico W LED
@@ -56,7 +90,7 @@ int main()
 
     err_t err = tcp_bind(pcb, NULL, TCP_PORT);
     if (err) {
-        printf("Failure binding to port \n");
+        printf("Failure binding to port\n");
         return -1;
     }
 
@@ -67,6 +101,8 @@ int main()
 
     while (true) {
         cyw43_arch_poll();
+        // printf(ip4addr_ntoa(netif_ip4_addr(netif_list)));
+        // printf("\n");
     }
     cyw43_arch_deinit();
 }
