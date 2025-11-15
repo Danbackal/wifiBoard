@@ -2,25 +2,31 @@
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 #include "lwip/tcp.h"
+#include "html_page.h"
 
-// IP: 192.168.68.105
+// IP: I
 
 #define TCP_PORT 4242
-
-#define RESPONSE "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 38\r\n<html><body>Hello, world!</body></html>"
 
 static const char http_response[] =
     "HTTP/1.1 200 OK\r\n"
     "Content-Type: text/html\r\n"
-    "Content-Length: 12\r\n"
     "Connection: close\r\n"
     "\r\n"
-    "Hello World!";
+    "<!DOCTYPE html>"
+    "<html>"
+    "<body>"
+    "<form action=\"/submit\" method=\"POST\">"
+    "<input type=\"text\" name=\"message\">"
+    "<input type=\"submit\" value=\"Send\">"
+    "</form>"
+    "</body>"
+    "</html>";
 
 static struct tcp_pcb *client_pcb;
 
 static err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb) {
-    err_t err = tcp_write(tpcb, http_response, sizeof(http_response)-1, TCP_WRITE_FLAG_COPY);
+    err_t err = tcp_write(tpcb, HTML_PAGE, sizeof(HTML_PAGE)-1, TCP_WRITE_FLAG_COPY);
     if (err != ERR_OK) {
         printf("Failure to write data\n");
         return err;
@@ -31,10 +37,16 @@ static err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb) {
 }
 
 static err_t tcp_server_response(void *arg, struct tcp_pcb *client_pcb, pbuf *client_buf, err_t err) {
+
     if (err != ERR_OK || client_pcb == NULL || client_buf == NULL) {
         printf("Failure in response\n");
         return ERR_VAL;
     }
+    printf("Response Received\n");
+    char buffer[1024];
+    memset(buffer, 0, sizeof(buffer));
+    pbuf_copy_partial(client_buf, buffer, client_buf->tot_len, 0);
+    printf("Received Data: %s\n", buffer);
     tcp_recved(client_pcb, client_buf->tot_len);
     pbuf_free(client_buf);
     printf("Accepted Response\n");
